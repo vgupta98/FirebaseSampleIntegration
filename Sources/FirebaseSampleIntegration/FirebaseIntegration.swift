@@ -135,7 +135,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
             return
         }
         
-        let properties = payload.properties?.dictionary
+        let properties = payload.properties?.dictionary?.rawDictionary
         
         // Handle special "Application Opened" event - equivalent to handleApplicationOpenedEvent
         if eventName == "Application Opened" {
@@ -409,10 +409,10 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         params[AnalyticsParameterScreenName] = screenName
         
         // Attach custom properties - equivalent to [self attachAllCustomProperties:params properties:message.properties isECommerceEvent:NO]
-        attachAllCustomProperties(params: &params, properties: payload.properties?.dictionary, isECommerceEvent: false)
+        attachAllCustomProperties(params: &params, properties: payload.properties?.dictionary?.rawDictionary, isECommerceEvent: false)
         
         // Log screen view event - equivalent to [FIRAnalytics logEventWithName:kFIREventScreenView parameters:params]
-        LoggerAnalytics.debug("FirebaseIntegration: Logged screen view \"\(screenName)\" to Firebase with properties: \(payload.properties?.dictionary ?? [:])")
+        LoggerAnalytics.debug("FirebaseIntegration: Logged screen view \"\(screenName)\" to Firebase with properties: \(payload.properties?.dictionary?.rawDictionary ?? [:])")
         FirebaseAnalytics.Analytics.logEvent(AnalyticsEventScreenView, parameters: params)
     }
 }
