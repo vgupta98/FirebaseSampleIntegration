@@ -12,18 +12,18 @@ import RudderStackAnalytics
  * This class provides Firebase Analytics integration for the RudderStack Swift SDK.
  * It converts RudderStack events to Firebase Analytics events and handles user identification.
  */
-class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
+public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     
     // MARK: - Required Properties
     
     /// Plugin type is always terminal for integration plugins
-    var pluginType: PluginType = .terminal
+    public var pluginType: PluginType = .terminal
     
     /// Reference to the analytics instance
-    var analytics: RudderStackAnalytics.Analytics?
+    public var analytics: RudderStackAnalytics.Analytics?
     
     /// Integration key identifier
-    var key: String = "Firebase"
+    public var key: String = "Firebase"
     
     // MARK: - Private Properties
     
@@ -35,7 +35,7 @@ class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      * Creates and initializes the Firebase integration
      * Equivalent to Objective-C: initWithConfig:withAnalytics:withRudderConfig:
      */
-    func create(destinationConfig: [String: Any]) throws {
+    public func create(destinationConfig: [String: Any]) throws {
         // Ensure Firebase initialization happens on the main queue (like Objective-C version)
         DispatchQueue.main.sync {
             // Check if Firebase is already configured to avoid duplicate initialization
@@ -54,7 +54,7 @@ class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      * Returns the Firebase Analytics instance
      * Required by IntegrationPlugin protocol
      */
-    func getDestinationInstance() -> Any? {
+    public func getDestinationInstance() -> Any? {
         // Return Firebase Analytics class if Firebase is configured
         return FirebaseApp.app() != nil ? FirebaseAnalytics.Analytics.self : nil
     }
@@ -65,7 +65,7 @@ class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      * Updates destination configuration dynamically
      * Swift-specific feature for dynamic config updates
      */
-    func update(destinationConfig: [String: Any]) throws {
+    public func update(destinationConfig: [String: Any]) throws {
         // Firebase doesn't require configuration updates after initialization
         // The integration framework handles destination config changes
         LoggerAnalytics.debug("Firebase configuration update requested - no action needed")
@@ -74,7 +74,7 @@ class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     /**
      * Resets user state - equivalent to Objective-C reset method
      */
-    func reset() {
+    public func reset() {
         // Clear Firebase user ID - equivalent to [FIRAnalytics setUserID:nil]
         FirebaseAnalytics.Analytics.setUserID(nil)
         LoggerAnalytics.debug("Reset: Firebase Analytics setUserID:nil")
@@ -83,7 +83,7 @@ class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     /**
      * Flushes pending events - equivalent to Objective-C flush method
      */
-    func flush() {
+    public func flush() {
         // Firebase doesn't support flush functionality - no-op implementation
         LoggerAnalytics.debug("Firebase flush requested - no action needed (Firebase doesn't support flush)")
     }
@@ -94,7 +94,7 @@ class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      * Handles identify events
      * Extracted from Objective-C dump method's identify handling
      */
-    func identify(payload: IdentifyEvent) {
+    public func identify(payload: IdentifyEvent) {
         // Set Firebase user ID if present - equivalent to [FIRAnalytics setUserID:userId]
         if let userId = payload.userId, !FirebaseUtils.isEmpty(userId) {
             LoggerAnalytics.debug("Setting userId to firebase")
@@ -125,7 +125,7 @@ class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      * Handles track events
      * Extracted from Objective-C dump method's track handling
      */
-    func track(payload: TrackEvent) {
+    public func track(payload: TrackEvent) {
         // Check if event name is present - equivalent to [RudderUtils isEmpty:eventName] check
         let eventName = payload.event
         guard !FirebaseUtils.isEmpty(eventName) else {
@@ -394,7 +394,7 @@ class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      * Handles screen events
      * Extracted from Objective-C dump method's screen handling
      */
-    func screen(payload: ScreenEvent) {
+    public func screen(payload: ScreenEvent) {
         // Check if screen name is present - equivalent to [RudderUtils isEmpty:screenName] check
         let screenName = payload.event
         guard !FirebaseUtils.isEmpty(screenName) else {
