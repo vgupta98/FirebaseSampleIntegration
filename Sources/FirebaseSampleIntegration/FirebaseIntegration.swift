@@ -99,7 +99,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     public func identify(payload: IdentifyEvent) {
         // Set Firebase user ID if present - equivalent to [FIRAnalytics setUserID:userId]
         if let userId = payload.userId, !FirebaseUtils.isEmpty(userId) {
-            LoggerAnalytics.debug("Setting userId to firebase")
+            LoggerAnalytics.debug("FirebaseIntegration: Setting userId to firebase")
             FirebaseAnalytics.Analytics.setUserID(userId)
         }
         
@@ -117,7 +117,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
                 
                 // Set user property with string conversion
                 let stringValue = "\(value)"
-                LoggerAnalytics.debug("Setting userProperty to Firebase: \(firebaseKey)")
+                LoggerAnalytics.debug("FirebaseIntegration: Setting userProperty to Firebase: \(firebaseKey)")
                 FirebaseAnalytics.Analytics.setUserProperty(stringValue, forName: firebaseKey)
             }
         }
@@ -131,7 +131,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         // Check if event name is present - equivalent to [RudderUtils isEmpty:eventName] check
         let eventName = payload.event
         guard !FirebaseUtils.isEmpty(eventName) else {
-            LoggerAnalytics.debug("Since the event name is not present, the track event sent to Firebase has been dropped.")
+            LoggerAnalytics.debug("FirebaseIntegration: Since the event name is not present, the track event sent to Firebase has been dropped.")
             return
         }
         
@@ -200,7 +200,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      */
     private func makeFirebaseEvent(firebaseEvent: String, params: inout [String: Any], properties: [String: Any]?, isECommerceEvent: Bool) {
         attachAllCustomProperties(params: &params, properties: properties, isECommerceEvent: isECommerceEvent)
-        LoggerAnalytics.debug("Logged \"\(firebaseEvent)\" to Firebase with properties: \(properties ?? [:])")
+        LoggerAnalytics.debug("FirebaseIntegration: Logged \"\(firebaseEvent)\" to Firebase with properties: \(properties ?? [:])")
         FirebaseAnalytics.Analytics.logEvent(firebaseEvent, parameters: params)
     }
     
@@ -400,7 +400,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         // Check if screen name is present - equivalent to [RudderUtils isEmpty:screenName] check
         let screenName = payload.event
         guard !FirebaseUtils.isEmpty(screenName) else {
-            LoggerAnalytics.debug("Since the event name is not present, the screen event sent to Firebase has been dropped.")
+            LoggerAnalytics.debug("FirebaseIntegration: Since the event name is not present, the screen event sent to Firebase has been dropped.")
             return
         }
         
@@ -412,7 +412,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         attachAllCustomProperties(params: &params, properties: payload.properties?.dictionary, isECommerceEvent: false)
         
         // Log screen view event - equivalent to [FIRAnalytics logEventWithName:kFIREventScreenView parameters:params]
-        LoggerAnalytics.debug("Logged screen view \"\(screenName)\" to Firebase with properties: \(payload.properties?.dictionary ?? [:])")
+        LoggerAnalytics.debug("FirebaseIntegration: Logged screen view \"\(screenName)\" to Firebase with properties: \(payload.properties?.dictionary ?? [:])")
         FirebaseAnalytics.Analytics.logEvent(AnalyticsEventScreenView, parameters: params)
     }
 }
