@@ -14,6 +14,8 @@ import RudderStackAnalytics
  */
 public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     
+    public init() {}
+    
     // MARK: - Required Properties
     
     /// Plugin type is always terminal for integration plugins
