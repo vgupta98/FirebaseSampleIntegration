@@ -8,30 +8,25 @@ import RudderStackAnalytics
 
 /**
  * Firebase Integration for RudderStack Swift SDK
- * 
- * This class provides Firebase Analytics integration for the RudderStack Swift SDK.
- * It converts RudderStack events to Firebase Analytics events and handles user identification.
  */
 public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     
     public init() {}
     
-    // MARK: - Required Properties
-    
-    /// Plugin type is always terminal for integration plugins
+    /**
+     Plugin type for firebase integration
+     */
     public var pluginType: PluginType = .terminal
     
-    /// Reference to the analytics instance
+    /**
+     Reference to the analytics instance
+     */
     public var analytics: RudderStackAnalytics.Analytics?
     
-    /// Integration key identifier
+    /**
+     Integration key identifier
+     */
     public var key: String = "Firebase"
-    
-    // MARK: - Private Properties
-    
-    // No private state needed - integration framework handles configuration tracking
-    
-    // MARK: - Required Methods
     
     /**
      * Creates and initializes the Firebase integration
@@ -61,36 +56,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         return FirebaseApp.app() != nil ? FirebaseAnalytics.Analytics.self : nil
     }
     
-    // MARK: - Optional Methods (implement only if needed)
-    
-    /**
-     * Updates destination configuration dynamically
-     * Swift-specific feature for dynamic config updates
-     */
-    public func update(destinationConfig: [String: Any]) throws {
-        // Firebase doesn't require configuration updates after initialization
-        // The integration framework handles destination config changes
-        LoggerAnalytics.debug("Firebase configuration update requested - no action needed")
-    }
-    
-    /**
-     * Resets user state - equivalent to Objective-C reset method
-     */
-    public func reset() {
-        // Clear Firebase user ID - equivalent to [FIRAnalytics setUserID:nil]
-        FirebaseAnalytics.Analytics.setUserID(nil)
-        LoggerAnalytics.debug("Reset: Firebase Analytics setUserID:nil")
-    }
-    
-    /**
-     * Flushes pending events - equivalent to Objective-C flush method
-     */
-    public func flush() {
-        // Firebase doesn't support flush functionality - no-op implementation
-        LoggerAnalytics.debug("Firebase flush requested - no action needed (Firebase doesn't support flush)")
-    }
-    
-    // MARK: - Event Methods (extract from Objective-C dump logic)
+    // MARK: - Event Methods
     
     /**
      * Handles identify events
@@ -150,6 +116,42 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
             handleCustomEvent(eventName: eventName, properties: properties)
         }
     }
+    
+    /**
+     * Handles screen events
+     * Extracted from Objective-C dump method's screen handling
+     */
+    public func screen(payload: ScreenEvent) {
+        // Check if screen name is present - equivalent to [RudderUtils isEmpty:screenName] check
+        let screenName = payload.event
+        guard !FirebaseUtils.isEmpty(screenName) else {
+            LoggerAnalytics.debug("FirebaseIntegration: Since the event name is not present, the screen event sent to Firebase has been dropped.")
+            return
+        }
+        
+        // Create parameters dictionary and set screen name - equivalent to [params setValue:screenName forKey:kFIRParameterScreenName]
+        var params: [String: Any] = [:]
+        params[AnalyticsParameterScreenName] = screenName
+        
+        // Attach custom properties - equivalent to [self attachAllCustomProperties:params properties:message.properties isECommerceEvent:NO]
+        attachAllCustomProperties(params: &params, properties: payload.properties?.dictionary?.rawDictionary, isECommerceEvent: false)
+        
+        // Log screen view event - equivalent to [FIRAnalytics logEventWithName:kFIREventScreenView parameters:params]
+        LoggerAnalytics.debug("FirebaseIntegration: Logged screen view \"\(screenName)\" to Firebase with properties: \(payload.properties?.dictionary?.rawDictionary ?? [:])")
+        FirebaseAnalytics.Analytics.logEvent(AnalyticsEventScreenView, parameters: params)
+    }
+    
+    /**
+     * Resets user state - equivalent to Objective-C reset method
+     */
+    public func reset() {
+        // Clear Firebase user ID - equivalent to [FIRAnalytics setUserID:nil]
+        FirebaseAnalytics.Analytics.setUserID(nil)
+        LoggerAnalytics.debug("Reset: Firebase Analytics setUserID:nil")
+    }
+}
+
+extension FirebaseIntegration {
     
     // MARK: - Private Track Event Handlers
     
@@ -392,28 +394,4 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         }
     }
     
-    /**
-     * Handles screen events
-     * Extracted from Objective-C dump method's screen handling
-     */
-    public func screen(payload: ScreenEvent) {
-        // Check if screen name is present - equivalent to [RudderUtils isEmpty:screenName] check
-        let screenName = payload.event
-        guard !FirebaseUtils.isEmpty(screenName) else {
-            LoggerAnalytics.debug("FirebaseIntegration: Since the event name is not present, the screen event sent to Firebase has been dropped.")
-            return
-        }
-        
-        // Create parameters dictionary and set screen name - equivalent to [params setValue:screenName forKey:kFIRParameterScreenName]
-        var params: [String: Any] = [:]
-        params[AnalyticsParameterScreenName] = screenName
-        
-        // Attach custom properties - equivalent to [self attachAllCustomProperties:params properties:message.properties isECommerceEvent:NO]
-        attachAllCustomProperties(params: &params, properties: payload.properties?.dictionary?.rawDictionary, isECommerceEvent: false)
-        
-        // Log screen view event - equivalent to [FIRAnalytics logEventWithName:kFIREventScreenView parameters:params]
-        LoggerAnalytics.debug("FirebaseIntegration: Logged screen view \"\(screenName)\" to Firebase with properties: \(payload.properties?.dictionary?.rawDictionary ?? [:])")
-        FirebaseAnalytics.Analytics.logEvent(AnalyticsEventScreenView, parameters: params)
-    }
 }
-
