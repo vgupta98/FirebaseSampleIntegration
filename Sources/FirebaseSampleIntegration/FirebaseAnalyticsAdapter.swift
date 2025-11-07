@@ -58,11 +58,11 @@ class MockFirebaseAnalyticsAdapter: FirebaseAnalyticsAdapter {
         }
     }
     
-    func logEvent(_ name: String, parameters: [String: Any]?) {
-        logEventCalls.append((name: name, parameters: parameters))
+    func logEvent(_ event: String, parameters: [String: Any]?) {
+        logEventCalls.append((name: event, parameters: parameters))
     }
     
     func getAnalyticsInstance() -> Any? {
-        return nil
+        return "MockAnalyticsInstance" // Return a mock instance for testing
     }
 }
