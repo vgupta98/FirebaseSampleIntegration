@@ -39,20 +39,27 @@ class FirebaseAnalyticsAdapterImpl: FirebaseAnalyticsAdapter {
 // MARK - Mock Implementation
 
 class MockFirebaseAnalyticsAdapter: FirebaseAnalyticsAdapter {
-    var setUserIDCals: [String?] = []
-    var setUserPropertyCalls: [(name: String, value: String?)] = []
+    var setUserIDCalls: [String] = []
+    var setUserIDWithNilCalled: Bool = false
+    var setUserPropertyCalls: [(name: String, value: String)] = []
     var logEventCalls: [(name: String, parameters: [String: Any]?)] = []
-
+    
     func setUserID(_ id: String?) {
-        setUserIDCals.append(id)
+        if let id = id {
+            setUserIDCalls.append(id)
+        } else {
+            setUserIDWithNilCalled = true
+        }
     }
-
-    func setUserProperty(_ value: String?, forName: String) {
-        setUserPropertyCalls.append((forName, value))
+    
+    func setUserProperty(_ value: String?, forName name: String) {
+        if let value = value {
+            setUserPropertyCalls.append((name: name, value: value))
+        }
     }
-
+    
     func logEvent(_ name: String, parameters: [String: Any]?) {
-        logEventCalls.append((name, parameters))
+        logEventCalls.append((name: name, parameters: parameters))
     }
     
     func getAnalyticsInstance() -> Any? {
