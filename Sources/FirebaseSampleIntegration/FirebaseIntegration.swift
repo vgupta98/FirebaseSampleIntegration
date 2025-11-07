@@ -1,8 +1,8 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 
+
 import Foundation
-import FirebaseCore
 import FirebaseAnalytics
 import RudderStackAnalytics
 
@@ -11,7 +11,23 @@ import RudderStackAnalytics
  */
 public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     
-    public init() {}
+    final let analyticsAdapter: FirebaseAnalyticsAdapter
+    final let appAdapter: FirebaseAppAdapter
+    
+    internal init(
+        analyticsAdapter: FirebaseAnalyticsAdapter,
+        appAdapter: FirebaseAppAdapter
+    ) {
+        self.analyticsAdapter = analyticsAdapter
+        self.appAdapter = appAdapter
+    }
+    
+    public convenience init() {
+        self.init(
+            analyticsAdapter: FirebaseAnalyticsAdapterImpl(),
+            appAdapter: FirebaseAppAdapterImpl()
+        )
+    }
     
     /**
      Plugin type for firebase integration
@@ -33,17 +49,12 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      * Equivalent to Objective-C: initWithConfig:withAnalytics:withRudderConfig:
      */
     public func create(destinationConfig: [String: Any]) throws {
-        // Ensure Firebase initialization happens on the main queue (like Objective-C version)
-        DispatchQueue.main.sync {
-            // Check if Firebase is already configured to avoid duplicate initialization
-            if FirebaseApp.app() == nil {
-                // Configure Firebase - equivalent to [FIRApp configure] in Objective-C
-                FirebaseApp.configure()
-                LoggerAnalytics.debug("Firebase is initialized")
-            } else {
-                // Firebase already initialized - skip configuration
-                LoggerAnalytics.debug("Firebase core already initialized - skipping Firebase configuration")
-            }
+        // Ensure Firebase initialization happens on the main thread without capturing objects
+        if !self.appAdapter.isConfigured {
+            self.appAdapter.configure()
+            LoggerAnalytics.debug("Firebase is initialized")
+        } else {
+            LoggerAnalytics.debug("Firebase core already initialized - skipping Firebase configuration")
         }
     }
     
@@ -53,7 +64,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      */
     public func getDestinationInstance() -> Any? {
         // Return Firebase Analytics class if Firebase is configured
-        return FirebaseApp.app() != nil ? FirebaseAnalytics.Analytics.self : nil
+        return self.appAdapter.isConfigured ? self.analyticsAdapter.getAnalyticsInstance() : nil
     }
     
     // MARK: - Event Methods
@@ -66,7 +77,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         // Set Firebase user ID if present - equivalent to [FIRAnalytics setUserID:userId]
         if let userId = payload.userId, !FirebaseUtils.isEmpty(userId) {
             LoggerAnalytics.debug("FirebaseIntegration: Setting userId to firebase")
-            FirebaseAnalytics.Analytics.setUserID(userId)
+            self.analyticsAdapter.setUserID(userId)
         }
         
         // Set user properties from traits - equivalent to [FIRAnalytics setUserPropertyString:forName:]
@@ -84,7 +95,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
                 // Set user property with string conversion
                 let stringValue = "\(value)"
                 LoggerAnalytics.debug("FirebaseIntegration: Setting userProperty to Firebase: \(firebaseKey)")
-                FirebaseAnalytics.Analytics.setUserProperty(stringValue, forName: firebaseKey)
+                self.analyticsAdapter.setUserProperty(stringValue, forName: firebaseKey)
             }
         }
     }
@@ -138,7 +149,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         
         // Log screen view event - equivalent to [FIRAnalytics logEventWithName:kFIREventScreenView parameters:params]
         LoggerAnalytics.debug("FirebaseIntegration: Logged screen view \"\(screenName)\" to Firebase with properties: \(payload.properties?.dictionary?.rawDictionary ?? [:])")
-        FirebaseAnalytics.Analytics.logEvent(AnalyticsEventScreenView, parameters: params)
+        self.analyticsAdapter.logEvent(AnalyticsEventScreenView, parameters: params)
     }
     
     /**
@@ -146,7 +157,7 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
      */
     public func reset() {
         // Clear Firebase user ID - equivalent to [FIRAnalytics setUserID:nil]
-        FirebaseAnalytics.Analytics.setUserID(nil)
+        self.analyticsAdapter.setUserID(nil)
         LoggerAnalytics.debug("Reset: Firebase Analytics setUserID:nil")
     }
 }
@@ -203,7 +214,7 @@ extension FirebaseIntegration {
     private func makeFirebaseEvent(firebaseEvent: String, params: inout [String: Any], properties: [String: Any]?, isECommerceEvent: Bool) {
         attachAllCustomProperties(params: &params, properties: properties, isECommerceEvent: isECommerceEvent)
         LoggerAnalytics.debug("FirebaseIntegration: Logged \"\(firebaseEvent)\" to Firebase with properties: \(properties ?? [:])")
-        FirebaseAnalytics.Analytics.logEvent(firebaseEvent, parameters: params)
+        self.analyticsAdapter.logEvent(firebaseEvent, parameters: params)
     }
     
     /**
