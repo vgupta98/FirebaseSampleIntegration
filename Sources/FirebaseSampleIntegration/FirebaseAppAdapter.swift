@@ -8,12 +8,15 @@
 import Foundation
 import FirebaseCore
 
+/**
+ * Protocol to wrap FirebaseApp.
+ */
 protocol FirebaseAppAdapter {
     var isConfigured: Bool { get }
     func configure()
 }
 
-// MARK - Actual Implementation
+// MARK: Actual Implementation
 class FirebaseAppAdapterImpl: FirebaseAppAdapter {
     var isConfigured: Bool { FirebaseApp.app() != nil }
     
@@ -24,7 +27,7 @@ class FirebaseAppAdapterImpl: FirebaseAppAdapter {
     }
 }
 
-// MARK - Mock Implementation
+// MARK: Mock Implementation
 class MockFirebaseAppAdapter: FirebaseAppAdapter {
     var configured = false
 

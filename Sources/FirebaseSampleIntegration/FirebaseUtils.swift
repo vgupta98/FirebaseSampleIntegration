@@ -12,16 +12,15 @@ import FirebaseAnalytics
  * Firebase Utilities for RudderStack Firebase Integration
  * 
  * This class contains constants, mappings, and helper methods for the Firebase integration.
- * Equivalent to RudderUtils in the Objective-C version.
  */
 class FirebaseUtils {
     
     // MARK: - Reserved Keywords
     
-    /// Reserved keywords for identify events - equivalent to IDENTIFY_RESERVED_KEYWORDS
+    /// Reserved keywords for identify events
     static let identifyReservedKeywords: Set<String> = ["age", "gender", "interest"]
     
-    /// Reserved keywords for track events - equivalent to FIREBASE_TRACK_RESERVED_KEYWORDS
+    /// Reserved keywords for track events
     static let firebaseTrackReservedKeywords: Set<String> = [
         "product_id", "name", "category", "quantity", "price", "currency", "value", "revenue", 
         "total", "tax", "shipping", "coupon", "cart_id", "payment_method", "query", "list_id", 
@@ -31,7 +30,7 @@ class FirebaseUtils {
     
     // MARK: - Ecommerce Event Mapping
     
-    /// Ecommerce events mapping - equivalent to ECOMMERCE_EVENTS_MAPPING
+    /// Ecommerce events mapping
     static let ecommerceEventsMapping: [String: String] = [
         ECommPaymentInfoEntered: AnalyticsEventAddPaymentInfo,
         ECommProductAdded: AnalyticsEventAddToCart,
@@ -53,7 +52,7 @@ class FirebaseUtils {
     
     // MARK: - Product Properties Mapping
     
-    /// Product properties mapping - equivalent to PRODUCT_PROPERTIES_MAPPING
+    /// Product properties mapping
     static let productPropertiesMapping: [String: String] = [
         "product_id": AnalyticsParameterItemID,
         "name": AnalyticsParameterItemName,
@@ -64,7 +63,7 @@ class FirebaseUtils {
     
     // MARK: - Events with Products
     
-    /// Events that support products array - equivalent to EVENT_WITH_PRODUCTS_ARRAY
+    /// Events that support products array
     static let eventWithProductsArray: Set<String> = [
         AnalyticsEventBeginCheckout,
         AnalyticsEventPurchase,
@@ -73,7 +72,7 @@ class FirebaseUtils {
         AnalyticsEventViewCart
     ]
     
-    /// Events that support products at root level - equivalent to EVENT_WITH_PRODUCTS_AT_ROOT
+    /// Events that support products at root level
     static let eventWithProductsAtRoot: Set<String> = [
         AnalyticsEventAddToCart,
         AnalyticsEventAddToWishlist,
@@ -83,7 +82,7 @@ class FirebaseUtils {
     
     // MARK: - Ecommerce Property Mapping
     
-    /// Ecommerce property mapping - equivalent to ECOMMERCE_PROPERTY_MAPPING
+    /// Ecommerce property mapping
     static let ecommercePropertyMapping: [String: String] = [
         "payment_method": AnalyticsParameterPaymentType,
         "coupon": AnalyticsParameterCoupon,
@@ -119,7 +118,6 @@ class FirebaseUtils {
     
     /**
      * Trims and formats a key for Firebase
-     * Equivalent to Objective-C: getTrimKey
      */
     static func getTrimKey(_ key: String) -> String {
         let trimmedKey = key.lowercased()
@@ -137,7 +135,6 @@ class FirebaseUtils {
     
     /**
      * Checks if a value is empty
-     * Equivalent to Objective-C: isEmpty
      */
     static func isEmpty(_ value: Any?) -> Bool {
         if value == nil {
@@ -161,7 +158,6 @@ class FirebaseUtils {
     
     /**
      * Checks if a value is a number
-     * Equivalent to Objective-C: isNumber
      */
     static func isNumber(_ value: Any?) -> Bool {
         if value is NSNumber {

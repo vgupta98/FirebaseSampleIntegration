@@ -8,6 +8,9 @@
 import Foundation
 import FirebaseAnalytics
 
+/**
+ * Protocol to wrap FirebaseAnalytics.
+ */
 protocol FirebaseAnalyticsAdapter {
     func setUserID(_ id: String?)
     func setUserProperty(_ value: String?, forName: String)
@@ -15,8 +18,7 @@ protocol FirebaseAnalyticsAdapter {
     func getAnalyticsInstance() -> Any?
 }
 
-// MARK - Actual Implementation
-
+// MARK: Actual Implementation
 class FirebaseAnalyticsAdapterImpl: FirebaseAnalyticsAdapter {
     func setUserID(_ id: String?) {
         FirebaseAnalytics.Analytics.setUserID(id)
@@ -36,8 +38,7 @@ class FirebaseAnalyticsAdapterImpl: FirebaseAnalyticsAdapter {
 }
 
 
-// MARK - Mock Implementation
-
+// MARK: Mock Implementation
 class MockFirebaseAnalyticsAdapter: FirebaseAnalyticsAdapter {
     var setUserIDCalls: [String] = []
     var setUserIDWithNilCalled: Bool = false

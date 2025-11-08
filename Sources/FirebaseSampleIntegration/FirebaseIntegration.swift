@@ -46,7 +46,6 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     
     /**
      * Creates and initializes the Firebase integration
-     * Equivalent to Objective-C: initWithConfig:withAnalytics:withRudderConfig:
      */
     public func create(destinationConfig: [String: Any]) throws {
         // Ensure Firebase initialization happens on the main thread without capturing objects
@@ -71,26 +70,25 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     
     /**
      * Handles identify events
-     * Extracted from Objective-C dump method's identify handling
      */
     public func identify(payload: IdentifyEvent) {
-        // Set Firebase user ID if present - equivalent to [FIRAnalytics setUserID:userId]
+        // Set Firebase user ID if present
         if let userId = payload.userId, !FirebaseUtils.isEmpty(userId) {
             LoggerAnalytics.debug("FirebaseIntegration: Setting userId to firebase")
             self.analyticsAdapter.setUserID(userId)
         }
         
-        // Set user properties from traits - equivalent to [FIRAnalytics setUserPropertyString:forName:]
+        // Set user properties from traits
         if let traits = payload.context?["traits"] as? AnyCodable {
             if let traitsDictionary = traits.value as? [String: Any] {
                 for (key, value) in traitsDictionary {
                     // Skip userId key to avoid duplication
                     guard key != "userId" else { continue }
                     
-                    // Trim and format the key - equivalent to [RudderUtils getTrimKey:]
+                    // Trim and format the key
                     let firebaseKey = FirebaseUtils.getTrimKey(key)
                     
-                    // Filter out reserved keywords - equivalent to IDENTIFY_RESERVED_KEYWORDS check
+                    // Filter out reserved keywords
                     guard !FirebaseUtils.identifyReservedKeywords.contains(firebaseKey) else { continue }
                     
                     // Set user property with string conversion
@@ -104,10 +102,9 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     
     /**
      * Handles track events
-     * Extracted from Objective-C dump method's track handling
      */
     public func track(payload: TrackEvent) {
-        // Check if event name is present - equivalent to [RudderUtils isEmpty:eventName] check
+        // Check if event name is present
         let eventName = payload.event
         guard !FirebaseUtils.isEmpty(eventName) else {
             LoggerAnalytics.debug("FirebaseIntegration: Since the event name is not present, the track event sent to Firebase has been dropped.")
@@ -116,15 +113,15 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         
         let properties = payload.properties?.dictionary?.rawDictionary
         
-        // Handle special "Application Opened" event - equivalent to handleApplicationOpenedEvent
+        // Handle special "Application Opened" event
         if eventName == "Application Opened" {
             handleApplicationOpenedEvent(properties: properties)
         }
-        // Handle ecommerce events - equivalent to ECOMMERCE_EVENTS_MAPPING check
+        // Handle ecommerce events
         else if let firebaseEvent = FirebaseUtils.ecommerceEventsMapping[eventName] {
             handleECommerceEvent(eventName: eventName, firebaseEvent: firebaseEvent, properties: properties)
         }
-        // Handle custom events - equivalent to handleCustomEvent
+        // Handle custom events
         else {
             handleCustomEvent(eventName: eventName, properties: properties)
         }
@@ -132,33 +129,32 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
     
     /**
      * Handles screen events
-     * Extracted from Objective-C dump method's screen handling
      */
     public func screen(payload: ScreenEvent) {
-        // Check if screen name is present - equivalent to [RudderUtils isEmpty:screenName] check
+        // Check if screen name is present
         let screenName = payload.event
         guard !FirebaseUtils.isEmpty(screenName) else {
             LoggerAnalytics.debug("FirebaseIntegration: Since the event name is not present, the screen event sent to Firebase has been dropped.")
             return
         }
         
-        // Create parameters dictionary and set screen name - equivalent to [params setValue:screenName forKey:kFIRParameterScreenName]
+        // Create parameters dictionary and set screen name
         var params: [String: Any] = [:]
         params[AnalyticsParameterScreenName] = screenName
         
-        // Attach custom properties - equivalent to [self attachAllCustomProperties:params properties:message.properties isECommerceEvent:NO]
+        // Attach custom properties
         attachAllCustomProperties(params: &params, properties: payload.properties?.dictionary?.rawDictionary, isECommerceEvent: false)
         
-        // Log screen view event - equivalent to [FIRAnalytics logEventWithName:kFIREventScreenView parameters:params]
+        // Log screen view event
         LoggerAnalytics.debug("FirebaseIntegration: Logged screen view \"\(screenName)\" to Firebase with properties: \(payload.properties?.dictionary?.rawDictionary ?? [:])")
         self.analyticsAdapter.logEvent(AnalyticsEventScreenView, parameters: params)
     }
     
     /**
-     * Resets user state - equivalent to Objective-C reset method
+     * Resets user state
      */
     public func reset() {
-        // Clear Firebase user ID - equivalent to [FIRAnalytics setUserID:nil]
+        // Clear Firebase user ID
         self.analyticsAdapter.setUserID(nil)
         LoggerAnalytics.debug("Reset: Firebase Analytics setUserID:nil")
     }
@@ -170,7 +166,6 @@ extension FirebaseIntegration {
     
     /**
      * Handles Application Opened event
-     * Equivalent to Objective-C: handleApplicationOpenedEvent
      */
     private func handleApplicationOpenedEvent(properties: [String: Any]?) {
         let firebaseEvent = AnalyticsEventAppOpen
@@ -180,7 +175,6 @@ extension FirebaseIntegration {
     
     /**
      * Handles ecommerce events with mapping
-     * Equivalent to Objective-C: handleECommerceEvent
      */
     private func handleECommerceEvent(eventName: String, firebaseEvent: String, properties: [String: Any]?) {
         var params: [String: Any] = [:]
@@ -201,7 +195,6 @@ extension FirebaseIntegration {
     
     /**
      * Handles custom events
-     * Equivalent to Objective-C: handleCustomEvent
      */
     private func handleCustomEvent(eventName: String, properties: [String: Any]?) {
         let firebaseEvent = FirebaseUtils.getTrimKey(eventName)
@@ -211,7 +204,6 @@ extension FirebaseIntegration {
     
     /**
      * Makes Firebase event with parameters
-     * Equivalent to Objective-C: makeFirebaseEvent
      */
     private func makeFirebaseEvent(firebaseEvent: String, params: inout [String: Any], properties: [String: Any]?, isECommerceEvent: Bool) {
         attachAllCustomProperties(params: &params, properties: properties, isECommerceEvent: isECommerceEvent)
@@ -221,7 +213,6 @@ extension FirebaseIntegration {
     
     /**
      * Handles special parameter mappings for ecommerce events
-     * Equivalent to parts of Objective-C handleECommerceEvent method
      */
     private func handleSpecialECommerceParams(firebaseEvent: String, params: inout [String: Any], properties: [String: Any]) {
         // Handle share events
@@ -251,7 +242,6 @@ extension FirebaseIntegration {
     
     /**
      * Adds constant parameters for ecommerce events
-     * Equivalent to Objective-C: addConstantParamsForECommerceEvent
      */
     private func addConstantParamsForECommerceEvent(params: inout [String: Any], eventName: String) {
         switch eventName {
@@ -266,7 +256,6 @@ extension FirebaseIntegration {
     
     /**
      * Handles ecommerce-specific properties like revenue, products, currency
-     * Equivalent to Objective-C: handleECommerceEventProperties
      */
     private func handleECommerceEventProperties(params: inout [String: Any], properties: [String: Any], firebaseEvent: String) {
         // Handle revenue/value mapping
@@ -320,7 +309,6 @@ extension FirebaseIntegration {
     
     /**
      * Handles products array or root-level product properties
-     * Equivalent to Objective-C: handleProducts
      */
     private func handleProducts(params: inout [String: Any], properties: [String: Any], isProductsArray: Bool) {
         var mappedProducts: [[String: Any]] = []
@@ -352,7 +340,6 @@ extension FirebaseIntegration {
     
     /**
      * Maps product properties to Firebase parameters
-     * Equivalent to Objective-C: putProductValue
      */
     private func putProductValue(params: inout [String: Any], properties: [String: Any]) {
         for (key, firebaseKey) in FirebaseUtils.productPropertiesMapping {
@@ -377,7 +364,6 @@ extension FirebaseIntegration {
     
     /**
      * Attaches all custom properties to Firebase parameters
-     * Equivalent to Objective-C: attachAllCustomProperties
      */
     private func attachAllCustomProperties(params: inout [String: Any], properties: [String: Any]?, isECommerceEvent: Bool) {
         guard let properties = properties, !properties.isEmpty else { return }
