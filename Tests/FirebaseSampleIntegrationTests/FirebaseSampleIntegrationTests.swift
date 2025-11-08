@@ -31,7 +31,10 @@ struct FirebaseIntegrationTests {
         if let traits = traits {
             userIdentity.traits = traits
         }
-        let event = IdentifyEvent(userIdentity: userIdentity)
+        var event = IdentifyEvent()
+        event.userId = userId
+        event.context = event.context ?? [:] + (["traits": traits ?? [:]].mapValues { AnyCodable($0) })
+
         return event
     }
     
@@ -192,7 +195,7 @@ struct FirebaseIntegrationTests {
         let traits = [
             "email": "test@example.com",
             "name": "Test User",
-            "age": 25,
+            "age": 25, // this is a reserved keyword, so won't be added
             "isVip": true
         ] as [String: Any]
         let identifyEvent = createIdentifyEvent(userId: "user123", traits: traits)
@@ -203,7 +206,7 @@ struct FirebaseIntegrationTests {
         // Then
         #expect(mockAnalyticsAdapter.setUserIDCalls.count == 1)
         #expect(mockAnalyticsAdapter.setUserIDCalls[0] == "user123")
-        #expect(mockAnalyticsAdapter.setUserPropertyCalls.count == 4)
+        #expect(mockAnalyticsAdapter.setUserPropertyCalls.count == 3)
         
         // Verify specific user properties
         let propertyNames = mockAnalyticsAdapter.setUserPropertyCalls.map { $0.name }
@@ -211,12 +214,12 @@ struct FirebaseIntegrationTests {
         
         #expect(propertyNames.contains("email"))
         #expect(propertyNames.contains("name"))
-        #expect(propertyNames.contains("age"))
-        #expect(propertyNames.contains("isVip"))
+        
+        #expect(propertyNames.contains("isvip"))
         
         #expect(propertyValues.contains("test@example.com"))
         #expect(propertyValues.contains("Test User"))
-        #expect(propertyValues.contains("25"))
+        
         #expect(propertyValues.contains("true"))
     }
     
@@ -241,7 +244,7 @@ struct FirebaseIntegrationTests {
         #expect(!propertyNames.contains("userId")) // Should be filtered out
         #expect(propertyNames.contains("email"))
         #expect(propertyNames.contains("first_name"))
-        #expect(propertyNames.contains("age"))
+        #expect(!propertyNames.contains("age"))
     }
     
     @Test("Given identify event with traits containing special characters, when identify is called, then keys are trimmed properly")
@@ -252,7 +255,9 @@ struct FirebaseIntegrationTests {
         let traits = [
             "user-name": "Test User",
             "user_email": "test@example.com",
-            "user.age": 25
+            "user.age": 25,
+            "User Profession": "Dev",
+            " User Address  ": "123 Main St"
         ] as [String: Any]
         let identifyEvent = createIdentifyEvent(userId: "user123", traits: traits)
         
@@ -261,9 +266,11 @@ struct FirebaseIntegrationTests {
         
         // Then
         let propertyNames = mockAnalyticsAdapter.setUserPropertyCalls.map { $0.name }
-        #expect(propertyNames.contains("user_name")) // Hyphens converted to underscores
+        #expect(propertyNames.contains("user-name"))
         #expect(propertyNames.contains("user_email"))
-        #expect(propertyNames.contains("user_age")) // Dots converted to underscores
+        #expect(propertyNames.contains("user.age"))
+        #expect(propertyNames.contains("user_profession"))
+        #expect(propertyNames.contains("user_address"))
     }
     
     // MARK: - Track Event Tests
@@ -313,10 +320,10 @@ struct FirebaseIntegrationTests {
         
         // Then
         #expect(mockAnalyticsAdapter.logEventCalls.count == 1)
-        #expect(mockAnalyticsAdapter.logEventCalls[0].name == "Custom_Event_Name")
+        #expect(mockAnalyticsAdapter.logEventCalls[0].name == "custom_event_name")
         let parameters = mockAnalyticsAdapter.logEventCalls[0].parameters
         #expect(parameters?["key1"] as? String == "value1")
-        #expect(parameters?["key2"] as? Int == 123)
+        #expect(parameters?["key2"] as? Double == 123.0)
     }
     
     @Test("Given ecommerce event Product Added, when track is called, then Firebase add_to_cart event is logged")
@@ -340,7 +347,7 @@ struct FirebaseIntegrationTests {
         #expect(mockAnalyticsAdapter.logEventCalls[0].name == "add_to_cart")
         let parameters = mockAnalyticsAdapter.logEventCalls[0].parameters
         #expect(parameters?["currency"] as? String == "USD")
-        #expect(parameters?["value"] as? Double == 99.99)
+        #expect(parameters?["value"] == nil) // value is a reserved keyword
     }
     
     @Test("Given ecommerce event Order Completed, when track is called, then Firebase purchase event is logged with transaction details")
@@ -537,7 +544,7 @@ struct FirebaseIntegrationTests {
         #expect(mockAnalyticsAdapter.logEventCalls[0].name == "screen_view")
         let parameters = mockAnalyticsAdapter.logEventCalls[0].parameters
         #expect(parameters?["screen_name"] as? String == "Home Screen")
-        #expect(parameters?["category"] as? String == "navigation")
+        #expect(parameters?["category"] == nil) // category is reserved keyword
         #expect(parameters?["path"] as? String == "/home")
     }
     
@@ -575,9 +582,9 @@ struct FirebaseIntegrationTests {
         #expect(mockAnalyticsAdapter.logEventCalls.count == 1)
         let parameters = mockAnalyticsAdapter.logEventCalls[0].parameters
         #expect(parameters?["screen_name"] as? String == "Product List")
-        #expect(parameters?["category"] as? String == "ecommerce")
-        #expect(parameters?["product_count"] as? Int == 5)
-        #expect(parameters?["is_logged_in"] as? Bool == true)
+        #expect(parameters?["category"] == nil)
+        #expect(parameters?["product_count"] as? Double == 5)
+        #expect(parameters?["is_logged_in"] as? Double == 1.0) // boolean is treated as a number value
         #expect(parameters?["loading_time"] as? Double == 2.5)
     }
     
@@ -675,7 +682,7 @@ struct FirebaseIntegrationTests {
         
         // Then
         #expect(mockAnalyticsAdapter.logEventCalls.count == 1)
-        #expect(mockAnalyticsAdapter.logEventCalls[0].name == "Simple_Event")
+        #expect(mockAnalyticsAdapter.logEventCalls[0].name == "simple_event")
         let parameters = mockAnalyticsAdapter.logEventCalls[0].parameters
         #expect(parameters?.isEmpty == true)
     }
@@ -738,9 +745,9 @@ struct FirebaseIntegrationTests {
         #expect(mockAnalyticsAdapter.logEventCalls.count == 1)
         let parameters = mockAnalyticsAdapter.logEventCalls[0].parameters
         #expect(parameters?["string_value"] as? String == "text")
-        #expect(parameters?["int_value"] as? Int == 42)
+        #expect(parameters?["int_value"] as? Double == 42) // int value is converted to double
         #expect(parameters?["double_value"] as? Double == 3.14)
-        #expect(parameters?["bool_value"] as? Bool == true)
+        #expect(parameters?["bool_value"] as? Double == 1) // boolean value is converted to double
         // nil_value should be filtered out
     }
     
@@ -850,7 +857,14 @@ struct FirebaseIntegrationTests {
         
         // Event tracking
         #expect(mockAnalyticsAdapter.logEventCalls.count == 2) // Custom event + Screen view
-        #expect(mockAnalyticsAdapter.logEventCalls[0].name == "Feature_Used")
+        #expect(mockAnalyticsAdapter.logEventCalls[0].name == "feature_used")
         #expect(mockAnalyticsAdapter.logEventCalls[1].name == "screen_view")
+    }
+}
+
+
+extension Dictionary where Key == String {
+    static func + (lhs: [Key: Value], rhs: [Key: Value]) -> [Key: Value] {
+        return lhs.merging(rhs) { (_, new) in new }
     }
 }

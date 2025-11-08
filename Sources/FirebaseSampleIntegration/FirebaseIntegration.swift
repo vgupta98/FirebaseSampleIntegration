@@ -81,21 +81,23 @@ public class FirebaseIntegration: IntegrationPlugin, StandardIntegration {
         }
         
         // Set user properties from traits - equivalent to [FIRAnalytics setUserPropertyString:forName:]
-        if let traits = payload.traits?.dictionary {
-            for (key, value) in traits {
-                // Skip userId key to avoid duplication
-                guard key != "userId" else { continue }
-                
-                // Trim and format the key - equivalent to [RudderUtils getTrimKey:]
-                let firebaseKey = FirebaseUtils.getTrimKey(key)
-                
-                // Filter out reserved keywords - equivalent to IDENTIFY_RESERVED_KEYWORDS check
-                guard !FirebaseUtils.identifyReservedKeywords.contains(firebaseKey) else { continue }
-                
-                // Set user property with string conversion
-                let stringValue = "\(value)"
-                LoggerAnalytics.debug("FirebaseIntegration: Setting userProperty to Firebase: \(firebaseKey)")
-                self.analyticsAdapter.setUserProperty(stringValue, forName: firebaseKey)
+        if let traits = payload.context?["traits"] as? AnyCodable {
+            if let traitsDictionary = traits.value as? [String: Any] {
+                for (key, value) in traitsDictionary {
+                    // Skip userId key to avoid duplication
+                    guard key != "userId" else { continue }
+                    
+                    // Trim and format the key - equivalent to [RudderUtils getTrimKey:]
+                    let firebaseKey = FirebaseUtils.getTrimKey(key)
+                    
+                    // Filter out reserved keywords - equivalent to IDENTIFY_RESERVED_KEYWORDS check
+                    guard !FirebaseUtils.identifyReservedKeywords.contains(firebaseKey) else { continue }
+                    
+                    // Set user property with string conversion
+                    let stringValue = "\(value)"
+                    LoggerAnalytics.debug("FirebaseIntegration: Setting userProperty to Firebase: \(firebaseKey)")
+                    self.analyticsAdapter.setUserProperty(stringValue, forName: firebaseKey)
+                }
             }
         }
     }
@@ -277,7 +279,7 @@ extension FirebaseIntegration {
         }
         
         // Handle products array or root-level products
-        if FirebaseUtils.eventWithProductsArray.contains(firebaseEvent), let products = properties["products"] {
+        if FirebaseUtils.eventWithProductsArray.contains(firebaseEvent), let _ = properties["products"] {
             handleProducts(params: &params, properties: properties, isProductsArray: true)
         }
         
